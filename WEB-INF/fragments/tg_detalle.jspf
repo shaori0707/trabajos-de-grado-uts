@@ -1,0 +1,27 @@
+<%-- Ventana "Detalles de la SOLICITUD". Requiere idInfo (id del proyecto) y tgCerrar (URL al cerrar). --%>
+<sql:query dataSource="${dataSource}" var="tgDet">
+    SELECT p.codigo, p.titulo, p.modalidad, per.nombre AS periodo_nombre,
+           CONCAT(ud.nombre, ' ', COALESCE(ud.apellido, '')) AS director, CONCAT(ue.nombre, ' ', COALESCE(ue.apellido, '')) AS evaluador,
+           (SELECT u.nivel FROM usuarios u WHERE u.id = p.creado_por) AS nivel, p.id
+      FROM proyectos p LEFT JOIN periodo_academico per ON per.id = p.periodo_id
+      LEFT JOIN usuarios ud ON ud.id = p.director_id LEFT JOIN usuarios ue ON ue.id = p.evaluador_id WHERE p.id = ?
+    <sql:param value="${idInfo}" />
+</sql:query>
+<c:if test="${not empty tgDet.rows}">
+<c:set var="d" value="${tgDet.rows[0]}" />
+<sql:query dataSource="${dataSource}" var="tgInt">SELECT u.nombre, u.apellido, u.cedula, u.email FROM proyecto_estudiantes pe JOIN usuarios u ON u.id = pe.estudiante_id WHERE pe.proyecto_id = ?<sql:param value="${d.id}" /></sql:query>
+<div class="modal" style="display:flex" data-fijo><div class="modal-content" style="position:relative">
+    <a class="tg-cerrar" href="${tgCerrar}" aria-label="Cerrar">&times;</a>
+    <div class="tg-modal-titulo">Detalles de la <span>SOLICITUD</span></div>
+    <div class="tg-fila"><b>Código:</b><span><c:out value="${d.codigo}" /></span></div>
+    <div class="tg-fila"><b>Título del proyecto:</b><span><c:out value="${d.titulo}" /></span></div>
+    <div class="tg-fila"><b>Docentes:</b><span>Director: <c:out value="${empty fn:trim(d.director) ? 'No asignado' : d.director}" /><br>Evaluador: <c:out value="${empty fn:trim(d.evaluador) ? 'No asignado' : d.evaluador}" /><br>Codirector: No asignado</span></div>
+    <div class="tg-fila"><b>Nivel académico:</b><span>${d.nivel == 'tecnologia' ? 'Tecnológico' : 'Profesional'}</span></div>
+    <div class="tg-fila"><b>Modalidad:</b><span><c:out value="${d.modalidad}" /></span></div>
+    <div class="tg-fila"><b>Periodo académico:</b><span>${fn:replace(d.periodo_nombre, '.', '-')}</span></div>
+    <c:forEach var="i" items="${tgInt.rows}">
+        <div class="tg-fila"><b>Integrante:</b><span><c:out value="${i.nombre} ${i.apellido}" /><br>C.C. ${i.cedula}<br><a href="mailto:${i.email}">${i.email}</a></span></div>
+    </c:forEach>
+    <div style="text-align:right;margin-top:16px"><a class="tg-btn gris" href="${tgCerrar}">Cerrar</a></div>
+</div></div>
+</c:if>

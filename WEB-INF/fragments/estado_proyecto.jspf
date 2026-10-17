@@ -1,0 +1,65 @@
+<%-- Requiere en la página: taglibs c, sql, fn; conexion.jspf; variable estId (id del estudiante).
+     Deja en la página: proy (fila del proyecto activo más reciente del estudiante, o vacío). --%>
+
+<%-- Bloqueo automático por plazos vencidos (req. 27, 28, 29, 30) --%>
+<sql:update dataSource="${dataSource}">
+    UPDATE proyectos p
+      JOIN proyecto_estudiantes pe ON pe.proyecto_id = p.id
+      LEFT JOIN periodo_academico per ON per.id = p.periodo_id
+       SET p.bloqueado = 1,
+           p.motivo_bloqueo = CASE
+               WHEN p.estado_fase = 'En revisión' AND p.responsable <> 'Comité' AND p.fecha_limite_revision < NOW() THEN 'Plazo de revisión vencido'
+               WHEN p.fase_actual >= 4 AND p.fecha_aprobacion_propuesta IS NOT NULL
+                    AND NOW() > DATE_ADD(p.fecha_aprobacion_propuesta, INTERVAL 180 + p.dias_prorroga DAY) THEN 'Plazo de 180 días vencido'
+               ELSE 'Semana límite de propuesta superada' END
+     WHERE pe.estudiante_id = ? AND p.bloqueado = 0 AND p.cancelado = 0
+       AND p.estado_fase NOT IN ('Rechazado', 'Finalizado')
+       AND ( (p.estado_fase = 'En revisión' AND p.responsable <> 'Comité' AND p.fecha_limite_revision < NOW())
+          OR (p.fase_actual >= 4 AND p.fecha_aprobacion_propuesta IS NOT NULL
+              AND NOW() > DATE_ADD(p.fecha_aprobacion_propuesta, INTERVAL 180 + p.dias_prorroga DAY))
+          OR (p.fase_actual <= 3 AND per.id IS NOT NULL
+              AND CURDATE() > DATE_ADD(per.fecha_inicio, INTERVAL per.semana_limite_propuesta WEEK)) )
+    <sql:param value="${estId}" />
+</sql:update>
+
+<%-- Prórrogas agotadas (2 aprobadas) y plazo vencido otra vez: el proyecto se cancela (req. 31) --%>
+<sql:update dataSource="${dataSource}">
+    UPDATE proyectos p SET p.cancelado = 1
+     WHERE p.bloqueado = 1 AND p.cancelado = 0 AND p.motivo_bloqueo = 'Plazo de 180 días vencido'
+       AND (SELECT COUNT(*) FROM prorroga r WHERE r.proyecto_id = p.id AND r.estado = 'Aprobada') >= 2
+</sql:update>
+
+<sql:query dataSource="${dataSource}" var="proyActual">
+    SELECT p.*, per.nombre AS periodo_nombre, v.desde AS ventana_desde, v.hasta AS ventana_hasta,
+           CONCAT(ud.nombre, ' ', COALESCE(ud.apellido, '')) AS director_nombre,
+           CONCAT(ue.nombre, ' ', COALESCE(ue.apellido, '')) AS evaluador_nombre,
+           DATEDIFF(DATE(p.fecha_limite_revision), CURDATE()) AS dias_restantes,
+           EXISTS (SELECT 1 FROM revision r WHERE r.proyecto_id = p.id AND r.fase = 1 AND r.estado = 'Aprobado') AS pagado,
+           CASE
+             WHEN p.cancelado = 1 THEN 'El proyecto fue cancelado.'
+             WHEN p.estado_fase = 'Rechazado' THEN 'El proyecto fue rechazado.'
+             WHEN p.estado_fase = 'Finalizado' THEN 'El proceso ya finalizó.'
+             WHEN p.bloqueado = 1 THEN CONCAT('Proceso bloqueado: ', COALESCE(p.motivo_bloqueo, 'plazo vencido'))
+             WHEN p.responsable <> 'Estudiante' THEN CONCAT('Esperando a: ', p.responsable)
+             WHEN p.fase_actual NOT IN (1, 2, 4) THEN 'Esta fase no requiere entrega tuya.'
+             WHEN v.id IS NULL THEN 'El Comité aún no define las fechas de esta fase.'
+             WHEN CURDATE() < v.desde THEN CONCAT('Se habilita el ', DATE_FORMAT(v.desde, '%d/%m/%Y'))
+             WHEN CURDATE() > v.hasta AND p.dias_prorroga = 0 THEN 'La ventana de entrega de esta fase ya cerró.'
+             WHEN p.fase_actual = 4 AND p.prorroga_correcciones = 0 AND p.fecha_aprobacion_propuesta IS NOT NULL
+                  AND DATEDIFF(CURDATE(), DATE(p.fecha_aprobacion_propuesta)) < 90
+                  THEN CONCAT('El informe se puede entregar desde el ', DATE_FORMAT(DATE_ADD(p.fecha_aprobacion_propuesta, INTERVAL 90 DAY), '%d/%m/%Y'))
+             ELSE NULL END AS motivo_no_entrega
+      FROM proyecto_estudiantes pe
+      JOIN proyectos p ON p.id = pe.proyecto_id
+      LEFT JOIN periodo_academico per ON per.id = p.periodo_id
+      LEFT JOIN ventana_fase v ON v.periodo_id = p.periodo_id AND v.fase = p.fase_actual
+      LEFT JOIN usuarios ud ON ud.id = p.director_id
+      LEFT JOIN usuarios ue ON ue.id = p.evaluador_id
+     WHERE pe.estudiante_id = ?
+     ORDER BY p.id DESC LIMIT 1
+    <sql:param value="${estId}" />
+</sql:query>
+<c:remove var="proy" />
+<c:if test="${not empty proyActual.rows}">
+    <c:set var="proy" value="${proyActual.rows[0]}" />
+</c:if>
