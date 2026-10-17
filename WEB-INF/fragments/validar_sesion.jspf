@@ -1,0 +1,28 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
+<!-- Verificar que el usuario haya iniciado sesión (compatible con ambos métodos) -->
+<c:if test="${empty sessionScope.idUsuario and empty sessionScope.usuario}">
+    <c:redirect url="${pageContext.request.contextPath}/login.jsp"/>
+</c:if>
+
+<!-- Obtener rol desde donde esté disponible -->
+<c:set var="rolUsuario" value="${sessionScope.rol}" />
+<c:if test="${empty rolUsuario and not empty sessionScope.usuario}">
+    <c:set var="rolUsuario" value="${sessionScope.usuario.rol}" />
+</c:if>
+
+<%-- El evaluador es un docente: usa el mismo panel (Docente Director / Docente Evaluador) --%>
+<c:if test="${rolUsuario == 'evaluador'}"><c:set var="rolUsuario" value="docente" /></c:if>
+
+<c:set var="idUsuarioActual" value="${sessionScope.idUsuario}" />
+<c:if test="${empty idUsuarioActual and not empty sessionScope.usuario}">
+    <c:set var="idUsuarioActual" value="${sessionScope.usuario.id}" />
+    <c:set var="idUsuario" value="${sessionScope.usuario.id}" scope="session" />
+</c:if>
+
+<!-- Verificar rol específico si se pasa como atributo de página -->
+<c:if test="${not empty pageScope.rolRequerido}">
+    <c:if test="${rolUsuario != pageScope.rolRequerido and rolUsuario != 'admin'}">
+       <c:redirect url="${pageContext.request.contextPath}/login.jsp?error=sin_permiso"/>
+    </c:if>
+</c:if>
