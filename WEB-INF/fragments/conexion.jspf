@@ -1,0 +1,14 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/sql" prefix="sql" %>
+
+<!-- Conexión a la base de datos proyecto_final_2 (XAMPP) -->
+<sql:setDataSource
+    var="dataSource"
+    driver="com.mysql.cj.jdbc.Driver"
+    url="jdbc:mysql://localhost:3306/proyecto_final_2?useSSL=false&serverTimezone=America/Bogota&allowPublicKeyRetrieval=true&useOldAliasMetadataBehavior=true&useUnicode=true&characterEncoding=UTF-8"
+    user="root"
+    password=""
+/>
+
+<!-- Alias 'db' para compatibilidad con el código existente -->
+<c:set var="db" value="${dataSource}" scope="application" />
