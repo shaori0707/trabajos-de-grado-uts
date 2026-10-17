@@ -1,0 +1,196 @@
+<%-- "Seguimiento del PROYECTO": tarjetas por fase con documentos, calendario y reporte.
+     Requiere en la página: pp (fila del proyecto), ents, revs, nombresFase, tgVolver (URL de "Volver")
+     y opcionalmente tgPlagio ('director' o 'evaluador') para mostrar el botón rojo de reporte de plagio. --%>
+<sql:query dataSource="${dataSource}" var="tgVent">
+    SELECT v.fase, v.desde, v.hasta, per.semana_limite_propuesta, per.fecha_inicio, per.nombre AS periodo,
+           DATE_ADD(per.fecha_inicio, INTERVAL per.semana_limite_propuesta WEEK) AS limite_propuesta
+      FROM ventana_fase v JOIN periodo_academico per ON per.id = v.periodo_id WHERE v.periodo_id = ? ORDER BY v.fase
+    <sql:param value="${pp.periodo_id}" />
+</sql:query>
+<c:set var="tgDescr" value="${fn:split('El estudiante describe su idea y sube el pago.|El estudiante envía la propuesta al director.|El director envía propuesta a evaluador y comité.|El estudiante envía el informe al director.|El director envía el informe al evaluador y comité.|El Comité cierra el proceso y programa la sustentación.', '|')}" />
+<c:set var="tgIconos" value="${fn:split('fa-circle-check,fa-hourglass-half,fa-paper-plane,fa-hourglass-half,fa-paper-plane,fa-user-graduate', ',')}" />
+
+<%-- tgRol = 'director' o 'evaluador' (lo define cada panel). Decide quien puede revisar en la fase actual. --%>
+<c:set var="tgPuedeRev" value="${((tgRol == 'director' and (pp.fase_actual == 2 or pp.fase_actual == 4) and pp.responsable == 'Director') or (tgRol == 'evaluador' and (pp.fase_actual == 3 or pp.fase_actual == 5) and pp.responsable == 'Evaluador')) and pp.estado_fase == 'En revisión' and pp.bloqueado == 0 and pp.cancelado == 0}" />
+<c:set var="tgPuedeEnviar" value="${tgRol == 'director' and (pp.fase_actual == 3 or pp.fase_actual == 5) and pp.responsable == 'Director' and pp.estado_fase == 'En revisión' and pp.bloqueado == 0 and pp.cancelado == 0}" />
+<c:set var="tgDocFase" value="${(pp.fase_actual == 3 or pp.fase_actual == 5) ? pp.fase_actual - 1 : pp.fase_actual}" />
+
+<div class="section-card">
+    <div class="tg-encabezado">
+        <h2 class="tg-titulo">Seguimiento del <span>PROYECTO</span></h2>
+        <div class="tg-hbtns">
+            <c:if test="${not empty tgPlagio}"><button type="button" class="tg-ico rojo" data-modal="tgModalPlagio" title="Informar un posible plagio" aria-label="Informar un posible plagio"><i class="fas fa-exclamation-triangle"></i></button></c:if>
+            <button type="button" class="tg-ico pizarra" data-modal="tgModalCal" title="Calendario del proyecto" aria-label="Calendario del proyecto"><i class="far fa-calendar"></i></button>
+            <c:if test="${empty tgSinVolver}"><a href="${tgVolver}" class="tg-volver"><i class="fas fa-rotate-left"></i> Volver</a></c:if>
+        </div>
+    </div>
+    <p class="tg-sub"><c:out value="${pp.codigo}" /> · <c:out value="${pp.titulo}" /> ·
+        <span class="tg-badge fase">Fase ${pp.fase_actual}</span><span class="tg-badge resp">${pp.responsable}</span>
+        <c:if test="${pp.estado_fase == 'Finalizado'}"><span class="tg-badge ok">Finalizado</span></c:if>
+        <c:if test="${pp.estado_fase == 'Rechazado'}"><span class="tg-badge mal">Rechazado</span></c:if>
+        <c:if test="${pp.bloqueado == 1}"><span class="tg-badge mal">Bloqueado</span></c:if>
+        <c:if test="${pp.cancelado == 1}"><span class="tg-badge mal">Cancelado</span></c:if></p>
+    <div class="tg-fases">
+        <c:forEach var="n" begin="1" end="6">
+            <c:set var="alcanzada" value="${n <= pp.fase_actual or pp.estado_fase == 'Finalizado'}" />
+            <div class="tg-fase ${alcanzada ? 'on' : ''}">
+                <i class="fas ${tgIconos[n-1]} tg-circ"></i>
+                <strong><c:choose><c:when test="${n == 6}">Fase Final</c:when><c:otherwise>Fase ${n}: ${nombresFase[n-1]}</c:otherwise></c:choose></strong>
+                <small>${tgDescr[n-1]}</small>
+                <span class="tg-estado"><c:choose>
+                    <c:when test="${n < pp.fase_actual or pp.estado_fase == 'Finalizado'}"><i class="fas fa-check"></i> Aprobada</c:when>
+                    <c:when test="${n == pp.fase_actual}"><c:choose><c:when test="${pp.estado_fase == 'Pendiente de entrega'}">Pendiente de entrega</c:when><c:when test="${pp.estado_fase == 'En revisión'}">En revisión</c:when><c:when test="${pp.estado_fase == 'Aplazado'}">Aplazada</c:when><c:otherwise>Rechazada</c:otherwise></c:choose></c:when>
+                    <c:otherwise><i class="fas fa-lock"></i> Bloqueada</c:otherwise></c:choose></span>
+                <c:if test="${alcanzada}"><button type="button" class="tg-ico pizarra" data-modal="tgModalFase${n}" title="Ver detalles de la fase" aria-label="Ver detalles de la fase ${n}"><i class="far fa-eye"></i></button></c:if>
+                <c:if test="${n == pp.fase_actual and (tgPuedeRev or tgPuedeEnviar)}"><div style="margin-top:10px"><button type="button" class="tg-btn tg-subir" data-modal="tgModalRevisar"><i class="fas fa-pen-to-square"></i> <c:out value="${tgPuedeRev ? 'Revisar documentos' : 'Enviar al evaluador'}" /></button></div></c:if>
+                <c:if test="${tgEntrega == '1' and (n == 1 or n == 2 or n == 4) and pp.estado_fase != 'Finalizado' and pp.estado_fase != 'Rechazado' and pp.cancelado == 0}">
+                    <c:choose>
+                        <c:when test="${n == pp.fase_actual and empty pp.motivo_no_entrega}"><div style="margin-top:10px"><button type="button" class="tg-btn tg-subir" data-modal="tgModalSubir"><i class="fas fa-cloud-arrow-up"></i> Subir documentos</button></div></c:when>
+                        <c:when test="${n == pp.fase_actual}"><div class="tg-motivo"><i class="fas fa-lock"></i> <c:out value="${pp.motivo_no_entrega}" /></div></c:when>
+                        <c:when test="${n > pp.fase_actual}"><div style="margin-top:10px"><button type="button" class="tg-btn tg-subir" disabled title="Se desbloquea cuando se apruebe la fase anterior"><i class="fas fa-lock"></i> Subir documentos</button></div><div class="tg-motivo">Se desbloquea cuando se apruebe la fase anterior.</div></c:when>
+                    </c:choose>
+                </c:if>
+                <c:if test="${(n == 3 or n == 5) and n > pp.fase_actual}"><div class="tg-motivo"><i class="fas fa-lock"></i> Se habilita cuando se apruebe la fase anterior.</div></c:if>
+            </div>
+        </c:forEach>
+    </div>
+</div>
+
+<c:forEach var="n" begin="1" end="6">
+    <div class="modal" id="tgModalFase${n}"><div class="modal-content" style="position:relative">
+        <button type="button" class="tg-cerrar tg-cerrar-modal" aria-label="Cerrar">&times;</button>
+        <div class="tg-modal-titulo">Detalles del <span>PROYECTO</span></div>
+        <p class="tg-sub">Fase ${n}: ${nombresFase[n-1]}</p>
+        <c:set var="hayDoc" value="${false}" />
+        <c:forEach var="e" items="${ents.rows}">
+            <c:if test="${e.fase == n}">
+                <c:set var="hayDoc" value="${true}" />
+                <div class="tg-fila"><b><c:choose>
+                    <c:when test="${e.tipo == 'Pago'}">Comprobante de pago<c:if test="${not empty e.estudiante}"> — <c:out value="${e.estudiante}" /></c:if></c:when>
+                    <c:when test="${e.tipo == 'F-124'}">Propuesta - F-DC-124</c:when>
+                    <c:when test="${e.tipo == 'Rejilla'}">Rejilla de la propuesta</c:when>
+                    <c:when test="${e.tipo == 'F-125'}">Informe final - F-DC-125</c:when>
+                    <c:when test="${e.tipo == 'F-129'}">Rejilla - F-DC-129</c:when>
+                    <c:otherwise>Turnitin</c:otherwise></c:choose>:</b>
+                    <span><a href="<c:out value='${e.url}'/>" target="_blank" rel="noopener noreferrer"><i class="far fa-file-lines"></i> Documento ${e.version}</a>
+                        <small style="color:#66727D"> · ${fn:substring(e.fecha,8,10)}/${fn:substring(e.fecha,5,7)}/${fn:substring(e.fecha,0,4)} ${fn:substring(e.fecha,11,16)}</small></span></div>
+            </c:if>
+        </c:forEach>
+        <c:if test="${not hayDoc}"><div class="tg-fila"><b>Documentos</b><span>Esta fase no tiene enlaces propios: se revisan los de la fase anterior.</span></div></c:if>
+        <c:forEach var="r" items="${revs.rows}">
+            <c:if test="${r.fase == n}">
+                <div class="tg-fila"><b>${r.rol_revisor}: <c:out value="${r.revisor}" /></b>
+                    <span><span class="tg-badge ${r.estado == 'Aprobado' ? 'ok' : (r.estado == 'Aplazado' ? 'pen' : 'mal')}">${r.estado}</span>
+                        ${fn:substring(r.fecha,8,10)}/${fn:substring(r.fecha,5,7)}/${fn:substring(r.fecha,0,4)}<c:if test="${not empty r.observacion}"> — <c:out value="${r.observacion}" /></c:if></span></div>
+            </c:if>
+        </c:forEach>
+        <div style="text-align:right;margin-top:16px"><button type="button" class="tg-btn gris tg-cerrar-modal">Cerrar</button></div>
+    </div></div>
+</c:forEach>
+
+<c:if test="${tgPuedeRev or tgPuedeEnviar}">
+<div class="modal" id="tgModalRevisar"><div class="modal-content" style="position:relative">
+    <button type="button" class="tg-cerrar tg-cerrar-modal" aria-label="Cerrar">&times;</button>
+    <div class="tg-modal-titulo">${tgPuedeRev ? 'Revisar' : 'Enviar'} <span>FASE ${pp.fase_actual}</span></div>
+    <p class="tg-sub">${nombresFase[pp.fase_actual-1]}<c:if test="${not empty pp.fecha_limite_revision}"> · Fecha límite de respuesta: ${fn:substring(pp.fecha_limite_revision,8,10)}/${fn:substring(pp.fecha_limite_revision,5,7)}/${fn:substring(pp.fecha_limite_revision,0,4)} (${pp.dias_restantes} días restantes)</c:if></p>
+    <c:forEach var="e" items="${ents.rows}">
+        <c:if test="${e.fase == tgDocFase}">
+            <div class="tg-fila"><b><c:choose>
+                <c:when test="${e.tipo == 'Pago'}">Comprobante de pago<c:if test="${not empty e.estudiante}"> — <c:out value="${e.estudiante}" /></c:if></c:when>
+                <c:when test="${e.tipo == 'F-124'}">Propuesta - F-DC-124</c:when>
+                <c:when test="${e.tipo == 'Rejilla'}">Rejilla de la propuesta</c:when>
+                <c:when test="${e.tipo == 'F-125'}">Informe final - F-DC-125</c:when>
+                <c:when test="${e.tipo == 'F-129'}">Rejilla - F-DC-129</c:when>
+                <c:otherwise>Turnitin</c:otherwise></c:choose>:</b>
+                <span><a href="<c:out value='${e.url}'/>" target="_blank" rel="noopener noreferrer"><i class="far fa-file-lines"></i> Documento ${e.version}</a></span></div>
+        </c:if>
+    </c:forEach>
+    <c:choose>
+    <c:when test="${tgPuedeRev and tgRol == 'director'}">
+        <form method="post" action="revisar_director.jsp" style="display:grid;gap:12px;margin-top:14px">
+            <input type="hidden" name="proyectoId" value="${pp.id}">
+            <div><label><input type="radio" name="decision" value="Aprobado" required> Aprobado</label> &nbsp; <label><input type="radio" name="decision" value="Aplazado"> Aplazado</label> &nbsp; <label><input type="radio" name="decision" value="Rechazado"> Rechazado</label></div>
+            <label><input type="checkbox" name="firma" value="1"> Firmé el documento (obligatorio para aprobar)</label>
+            <label>Observaciones (obligatorias si es Aplazado o Rechazado)<textarea name="observacion" rows="3" class="tg-input" style="width:100%"></textarea></label>
+            <label><input type="checkbox" name="confirmar" value="1"> Confirmo el rechazo (termina el proyecto)</label>
+            <c:if test="${pp.fase_actual == 4}"><small>Para aprobar el informe debes tener al menos 2 seguimientos (llevas ${segs.rows[0].n}).</small></c:if>
+            <div style="text-align:right"><button type="button" class="tg-btn gris tg-cerrar-modal">Cancelar</button> <button type="submit" class="tg-btn">Guardar decisión</button></div>
+        </form>
+    </c:when>
+    <c:when test="${tgPuedeRev and tgRol == 'evaluador'}">
+        <form method="post" action="revisar_evaluador.jsp" style="display:grid;gap:12px;margin-top:14px">
+            <input type="hidden" name="proyectoId" value="${pp.id}">
+            <div>Objetivo general cumplido: <label><input type="radio" name="cumpleGeneral" value="1" required> Sí</label> <label><input type="radio" name="cumpleGeneral" value="0"> No</label></div>
+            <div>Objetivos específicos cumplidos: <label><input type="radio" name="cumpleEspecificos" value="1" required> Sí</label> <label><input type="radio" name="cumpleEspecificos" value="0"> No</label></div>
+            <div><label><input type="radio" name="decision" value="Aprobado" required> Aprobado</label> &nbsp; <label><input type="radio" name="decision" value="Aplazado"> Aplazado</label> &nbsp; <label><input type="radio" name="decision" value="Rechazado"> Rechazado</label></div>
+            <label><input type="checkbox" name="firma" value="1"> Firmé el documento (obligatorio para aprobar)</label>
+            <label>Observaciones (obligatorias si es Aplazado o Rechazado)<textarea name="observacion" rows="3" class="tg-input" style="width:100%"></textarea></label>
+            <label><input type="checkbox" name="confirmar" value="1"> Confirmo el rechazo (termina el proyecto)</label>
+            <div style="text-align:right"><button type="button" class="tg-btn gris tg-cerrar-modal">Cancelar</button> <button type="submit" class="tg-btn">Registrar decisión</button></div>
+        </form>
+    </c:when>
+    <c:otherwise>
+        <form method="post" action="enviar_evaluador.jsp" style="margin-top:14px;text-align:right">
+            <input type="hidden" name="proyectoId" value="${pp.id}">
+            <button type="button" class="tg-btn gris tg-cerrar-modal">Cancelar</button>
+            <button type="submit" class="tg-btn" onclick="return confirm('¿Enviar al evaluador y al Comité?')">Enviar al evaluador y al Comité</button>
+        </form>
+    </c:otherwise>
+    </c:choose>
+</div></div>
+</c:if>
+
+<div class="modal" id="tgModalCal"><div class="modal-content" style="position:relative">
+    <button type="button" class="tg-cerrar tg-cerrar-modal" aria-label="Cerrar">&times;</button>
+    <div class="tg-modal-titulo">Calendario del <span>PROYECTO</span></div>
+    <p class="tg-sub">Aquí podrás visualizar algunas fechas importantes del proyecto en curso.</p>
+    <table class="tg-tabla"><thead><tr><th class="cen">DESCRIPCIÓN</th><th class="cen">FECHAS</th></tr></thead><tbody>
+        <c:forEach var="v" items="${tgVent.rows}">
+            <tr><td>Fase ${v.fase}: ${nombresFase[v.fase-1]}</td><td>Desde el ${fn:substring(v.desde,8,10)}/${fn:substring(v.desde,5,7)}/${fn:substring(v.desde,0,4)} hasta el ${fn:substring(v.hasta,8,10)}/${fn:substring(v.hasta,5,7)}/${fn:substring(v.hasta,0,4)}</td></tr>
+        </c:forEach>
+        <c:if test="${not empty tgVent.rows}"><tr><td>Fecha máxima para aprobación de propuestas</td><td>Hasta el ${fn:substring(tgVent.rows[0].limite_propuesta,8,10)}/${fn:substring(tgVent.rows[0].limite_propuesta,5,7)}/${fn:substring(tgVent.rows[0].limite_propuesta,0,4)} (semana ${tgVent.rows[0].semana_limite_propuesta})</td></tr></c:if>
+        <tr><td>Entrega del informe final</td><td>Entre 90 y 180 días después de aprobada la propuesta<c:if test="${not empty pp.fecha_aprobacion_propuesta}"> (aprobada el ${fn:substring(pp.fecha_aprobacion_propuesta,8,10)}/${fn:substring(pp.fecha_aprobacion_propuesta,5,7)}/${fn:substring(pp.fecha_aprobacion_propuesta,0,4)})</c:if></td></tr>
+        <tr><td>Respuesta de director y evaluador</td><td>5 días por revisión</td></tr>
+    </tbody></table>
+</div></div>
+
+<c:if test="${not empty tgPlagio}">
+<div class="modal" id="tgModalPlagio"><div class="modal-content" style="position:relative">
+    <button type="button" class="tg-cerrar tg-cerrar-modal" aria-label="Cerrar">&times;</button>
+    <div class="tg-modal-titulo">Enviar reporte <span>PLAGIO</span></div>
+    <p class="tg-sub">Si encuentras un posible plagio en este proyecto, descríbelo y se enviará al Comité.</p>
+    <form method="post" action="alerta_plagio.jsp" style="display:grid;gap:12px">
+        <input type="hidden" name="proyectoId" value="${pp.id}"><input type="hidden" name="volver" value="${tgPlagio}">
+        <textarea name="detalle" rows="5" required placeholder="Describe su reporte o inconveniente" style="width:100%;padding:12px;border:1px solid #DDE2E5;border-radius:8px;font:inherit"></textarea>
+        <div style="text-align:right"><button type="button" class="tg-btn gris tg-cerrar-modal">Cancelar</button> <button type="submit" class="tg-btn">Enviar</button></div>
+    </form>
+</div></div>
+</c:if>
+
+<c:if test="${tgEntrega == '1' and empty pp.motivo_no_entrega and (pp.fase_actual == 1 or pp.fase_actual == 2 or pp.fase_actual == 4)}">
+<div class="modal" id="tgModalSubir"><div class="modal-content" style="position:relative">
+    <button type="button" class="tg-cerrar tg-cerrar-modal" aria-label="Cerrar">&times;</button>
+    <div class="tg-modal-titulo">Subir <span>DOCUMENTOS</span></div>
+    <p class="tg-sub">Fase ${pp.fase_actual}: ${nombresFase[pp.fase_actual-1]}. Sube cada documento (Word o PDF) a Drive u OneDrive y pega aquí su enlace.</p>
+    <c:if test="${pp.estado_fase == 'Aplazado'}"><p class="tg-sub" style="color:#B7791F">Fase aplazada: corrige según las observaciones y entrega un nuevo enlace.</p></c:if>
+    <form method="post" action="entregar.jsp" style="display:grid;gap:12px">
+        <input type="hidden" name="fase" value="${pp.fase_actual}">
+        <c:choose>
+            <c:when test="${pp.fase_actual == 1}">
+                <label>Comprobante de pago (debe cubrir a todos los integrantes)<input type="url" name="u1" required placeholder="https://..." class="tg-input"></label>
+            </c:when>
+            <c:when test="${pp.fase_actual == 2}">
+                <label>Propuesta F-DC-124<input type="url" name="u1" required placeholder="https://..." class="tg-input"></label>
+                <label>Rejilla<input type="url" name="u2" required placeholder="https://..." class="tg-input"></label>
+                <label>Informe Turnitin<input type="url" name="u3" required placeholder="https://..." class="tg-input"></label>
+            </c:when>
+            <c:otherwise>
+                <label>Informe final F-DC-125<input type="url" name="u1" required placeholder="https://..." class="tg-input"></label>
+                <label>Rejilla F-DC-129<input type="url" name="u2" required placeholder="https://..." class="tg-input"></label>
+                <label>Informe Turnitin<input type="url" name="u3" required placeholder="https://..." class="tg-input"></label>
+            </c:otherwise>
+        </c:choose>
+        <div style="text-align:right"><button type="button" class="tg-btn gris tg-cerrar-modal">Cancelar</button> <button type="submit" class="tg-btn">Enviar documentos</button></div>
+    </form>
+</div></div>
+</c:if>
