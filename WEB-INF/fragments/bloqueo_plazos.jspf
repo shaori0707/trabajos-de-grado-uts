@@ -1,0 +1,25 @@
+<%-- Bloquea los proyectos con plazos vencidos (req. 27, 28, 29, 30). Requiere taglib sql y conexion.jspf.
+     Los plazos de 5 días solo aplican al director y al evaluador, no al Comité. --%>
+<sql:update dataSource="${dataSource}">
+    UPDATE proyectos p
+      LEFT JOIN periodo_academico per ON per.id = p.periodo_id
+       SET p.bloqueado = 1,
+           p.motivo_bloqueo = CASE
+               WHEN p.estado_fase = 'En revisión' AND p.responsable IN ('Director', 'Evaluador') AND p.fecha_limite_revision < NOW() THEN 'Plazo de revisión vencido'
+               WHEN p.fase_actual >= 4 AND p.fecha_aprobacion_propuesta IS NOT NULL
+                    AND NOW() > DATE_ADD(p.fecha_aprobacion_propuesta, INTERVAL 180 + p.dias_prorroga DAY) THEN 'Plazo de 180 días vencido'
+               ELSE 'Semana límite de propuesta superada' END
+     WHERE p.bloqueado = 0 AND p.cancelado = 0 AND p.estado_fase NOT IN ('Rechazado', 'Finalizado')
+       AND ( (p.estado_fase = 'En revisión' AND p.responsable IN ('Director', 'Evaluador') AND p.fecha_limite_revision < NOW())
+          OR (p.fase_actual >= 4 AND p.fecha_aprobacion_propuesta IS NOT NULL
+              AND NOW() > DATE_ADD(p.fecha_aprobacion_propuesta, INTERVAL 180 + p.dias_prorroga DAY))
+          OR (p.fase_actual <= 3 AND per.id IS NOT NULL
+              AND CURDATE() > DATE_ADD(per.fecha_inicio, INTERVAL per.semana_limite_propuesta WEEK)) )
+</sql:update>
+
+<%-- Prórrogas agotadas (2 aprobadas) y plazo vencido otra vez: el proyecto se cancela (req. 31) --%>
+<sql:update dataSource="${dataSource}">
+    UPDATE proyectos p SET p.cancelado = 1
+     WHERE p.bloqueado = 1 AND p.cancelado = 0 AND p.motivo_bloqueo = 'Plazo de 180 días vencido'
+       AND (SELECT COUNT(*) FROM prorroga r WHERE r.proyecto_id = p.id AND r.estado = 'Aprobada') >= 2
+</sql:update>
