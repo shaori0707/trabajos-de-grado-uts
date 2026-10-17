@@ -1,0 +1,97 @@
+/* Aspecto "Sistema - Trabajos de Grado" UTS: se carga DESPUÉS del CSS propio de cada panel */
+:root{--color-principal:#A6C21B;--color-principal-hover:#92AC12;--tg-lima:#A6C21B;--tg-pizarra:#3E4C5A;--tg-azul:#1E6FD9;--tg-rojo:#C0392B;--tg-borde:#E6EAEC}
+body{font-family:'Nunito','Inter',Arial,sans-serif!important;background:#F1F4F2!important;color:#2F3A44}
+.dashboard{background:#F1F4F2}
+/* menú lateral */
+.sidebar{width:270px!important;margin:14px;height:calc(100vh - 28px)!important;border-radius:16px;box-shadow:0 2px 14px rgba(0,0,0,.06)!important;padding-bottom:10px}
+.sidebar-logo{padding:16px 18px!important;border-bottom:none!important;margin-bottom:8px!important;display:flex;align-items:center;justify-content:space-between}
+.sidebar-logo h2,.sidebar-logo p{display:none}
+.sidebar-logo img{height:48px}
+.sidebar .menu-title{display:none}
+.sidebar-menu{padding:0 14px!important}
+.sidebar-menu a{padding:11px 14px!important;border-radius:8px!important;font-size:.92rem;font-weight:600;color:#44505B!important;margin-bottom:4px}
+.sidebar-menu a:hover{background:#F1F6D6}
+.sidebar-menu a.active{background:var(--tg-lima)!important;color:#fff!important;box-shadow:0 2px 6px rgba(166,194,27,.45)}
+.sidebar-menu a.active i{color:#fff}
+.logout-sidebar{color:var(--tg-rojo)!important}
+.main-content{margin-left:300px!important;padding:14px 22px 30px 8px!important}
+/* encabezado */
+.tg-topbar{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);padding:14px 24px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.tg-topbar h3{font-size:1.25rem;font-weight:700;margin:0}
+.tg-user{position:relative}
+.tg-user-btn{background:none;border:none;display:flex;align-items:center;gap:10px;cursor:pointer;font:inherit;font-size:.85rem;color:#44505B}
+.tg-avatar{width:34px;height:34px;border-radius:50%;background:#6B7783;color:#fff;display:inline-flex;align-items:center;justify-content:center}
+.tg-menu-user{display:none;position:absolute;right:0;top:44px;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.12);min-width:170px;z-index:50;overflow:hidden}
+.tg-menu-user.abierto{display:block}
+.tg-menu-user a{display:block;padding:11px 16px;color:#44505B;text-decoration:none;font-size:.88rem}
+.tg-menu-user a:hover{background:#F1F6D6}
+/* tarjetas y títulos */
+.section-card{border:none!important;border-radius:14px!important;box-shadow:0 2px 12px rgba(0,0,0,.05)!important;padding:28px!important}
+.banner-fecha{background:#fff!important;color:#2F3A44!important;box-shadow:0 2px 12px rgba(0,0,0,.05);border-radius:14px!important}
+.banner-fecha h2,.banner-fecha p{color:#2F3A44!important}
+.tg-titulo{font-size:1.55rem;font-weight:700;margin:0 0 6px}
+.tg-titulo span,.tg-modal-titulo span{background:var(--tg-lima);color:#fff;padding:1px 10px;border-radius:6px;text-transform:uppercase;font-size:.95em}
+.tg-sub{color:#55616C;font-size:.92rem;margin-bottom:18px}
+.tg-encabezado{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.tg-hbtns{display:flex;gap:8px;align-items:center}
+.tg-ico{display:inline-flex;align-items:center;justify-content:center;width:38px;height:30px;border:none;border-radius:6px;color:#fff!important;cursor:pointer;text-decoration:none;font-size:.9rem}
+.tg-ico.pizarra{background:var(--tg-pizarra)}.tg-ico.azul{background:var(--tg-azul)}.tg-ico.rojo{background:var(--tg-rojo)}.tg-ico:hover{filter:brightness(1.15)}
+.tg-volver{background:var(--tg-lima);color:#fff!important;padding:7px 16px;border-radius:6px;text-decoration:none;font-weight:700;font-size:.85rem}
+/* tablas */
+table.tg-tabla{width:100%;border-collapse:collapse;font-size:.9rem}
+.tg-tabla th{background:#F1F3F5;color:#3A444D;font-weight:700;text-align:left;padding:12px 14px}
+.tg-tabla td{padding:12px 14px;border-bottom:1px solid var(--tg-borde);vertical-align:middle}
+.tg-tabla td.acc{white-space:nowrap}.tg-tabla th.cen,.tg-tabla td.cen{text-align:center}
+.tg-controles{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0;font-size:.88rem}
+.tg-controles select,.tg-controles input{padding:7px 10px;border:1px solid #DDE2E5;border-radius:6px;font:inherit;background:#fff}
+.tg-pie{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:14px;font-size:.85rem;color:#55616C}
+.tg-pag{display:flex;gap:4px}
+.tg-pag a,.tg-pag button{min-width:32px;height:30px;border:none;border-radius:6px;background:#E9EDEF;color:#44505B;cursor:pointer;font:inherit;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;padding:0 8px}
+.tg-pag .act{background:var(--tg-lima);color:#fff;font-weight:700}
+.tg-badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:.74rem;font-weight:700;border:1px solid transparent;margin-right:4px}
+.tg-badge.fase{background:#E9F0B8;border-color:#CBD95F;color:#4A5A06}
+.tg-badge.resp{background:#F7EBD0;border-color:#E6D3A0;color:#6B5A2E}
+.tg-badge.ok{background:#DDF3E4;border-color:#A9DCBA;color:#1E7B3A}
+.tg-badge.mal{background:#FBE3E3;border-color:#EDB3B3;color:#A12626}
+.tg-badge.pen{background:#FFF3D6;border-color:#EBD08A;color:#8A6410}
+/* inicio */
+.tg-inicio{text-align:center}
+.tg-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;text-align:center;margin-top:18px}
+.tg-card{background:#fff;border:1px solid var(--tg-borde);border-radius:12px;padding:26px 18px;text-decoration:none;color:#2F3A44;transition:all .2s;display:block;position:relative}
+.tg-card i{font-size:1.9rem;display:block;margin-bottom:12px}
+.tg-card strong{display:block;margin-bottom:6px}.tg-card small{color:#66727D}
+.tg-card:hover{background:var(--tg-lima);color:#fff;border-color:var(--tg-lima)}.tg-card:hover small{color:#fff}
+.tg-card .tg-n{position:absolute;top:10px;right:12px;background:var(--tg-rojo);color:#fff;border-radius:12px;font-size:.72rem;padding:2px 8px;font-weight:700}
+/* seguimiento por fases */
+.tg-fases{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px}
+.tg-fase{flex:1 1 190px;max-width:215px;border-radius:8px;padding:22px 14px;text-align:center;border:1px solid var(--tg-borde);background:#fff;color:#2F3A44}
+.tg-fase.on{background:var(--tg-lima);border-color:var(--tg-lima);color:#fff}
+.tg-fase .tg-circ{font-size:1.6rem;margin-bottom:10px;display:block}
+.tg-fase strong{display:block;margin-bottom:6px}.tg-fase small{display:block;font-size:.76rem;line-height:1.35;min-height:46px}
+/* modales */
+.modal-content{border-radius:14px!important;max-width:760px!important;max-height:88vh;overflow-y:auto}
+.tg-modal-titulo{font-size:1.3rem;font-weight:700;margin-bottom:16px}
+.tg-cerrar{position:absolute;right:16px;top:12px;font-size:1.4rem;color:#55616C;background:none;border:none;cursor:pointer;text-decoration:none}
+.tg-fila{display:grid;grid-template-columns:210px 1fr;gap:12px;padding:12px 14px;background:#F8F9FA;border-bottom:1px solid #fff;font-size:.9rem}
+.tg-fila b{font-weight:600;color:#44505B}
+.tg-btn{background:var(--tg-lima);color:#fff;border:none;border-radius:6px;padding:9px 18px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font:inherit;font-weight:700}
+.tg-btn.gris{background:#DDE3E6;color:#44505B}
+@media(max-width:992px){.main-content{margin-left:0!important;padding:70px 12px 20px!important}.sidebar{margin:0;height:100vh!important;border-radius:0}.tg-fila{grid-template-columns:1fr}}
+/* banners heredados de cada panel: mismo estilo que las demás tarjetas */
+.banner-fecha{padding:18px 26px!important;margin-bottom:16px!important;background-image:none!important;background:#fff!important}
+.banner-fecha h2{margin:0 0 4px!important;font-size:1.35rem!important;font-weight:700}
+.banner-fecha p{margin:0!important;font-size:.9rem!important;opacity:.85}
+.banner-fecha *{color:#2F3A44!important}
+.alert{border-radius:10px}
+.banner-fecha button,.banner-fecha a[class*="btn"]{background:var(--tg-lima)!important;color:#fff!important;border:none!important;padding:9px 18px;border-radius:6px;font-weight:700;text-decoration:none;cursor:pointer}
+.banner-fecha button *,.banner-fecha a[class*="btn"] *{color:#fff!important}
+td a{color:var(--tg-azul)}
+
+.tg-fase .tg-subir{background:#fff;color:var(--tg-lima);padding:7px 12px;font-size:.8rem}
+.tg-fase .tg-motivo{margin-top:10px;font-size:.76rem;background:rgba(0,0,0,.06);border-radius:6px;padding:6px 8px}
+.tg-fase.on .tg-motivo{background:rgba(255,255,255,.22)}
+.tg-input{width:100%;padding:10px;border:1px solid #DDE2E5;border-radius:8px;font:inherit;margin-top:4px}
+
+.tg-fase .tg-estado{display:inline-block;margin-top:2px;font-size:.72rem;font-weight:700;padding:2px 10px;border-radius:10px;background:#EEF1F3;color:#55616C}
+.tg-fase.on .tg-estado{background:rgba(255,255,255,.28);color:#fff}
+.tg-fase .tg-subir[disabled]{opacity:.55;cursor:not-allowed;background:#E4E7E9;color:#6C757D}

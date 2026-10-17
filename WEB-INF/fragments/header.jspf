@@ -1,0 +1,28 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
+<nav class="navbar">
+    <div class="container">
+        <div class="logo">
+            <img src="${pageContext.request.contextPath}/img/tu_logo.png" alt="Logo UTS" class="logo-img">
+            <span class="logo-text">Proyectos de Grado</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="${pageContext.request.contextPath}/index.jsp">Inicio</a></li>
+            <li><a href="${pageContext.request.contextPath}/index.jsp#roles">Participantes</a></li>
+            <li><a href="${pageContext.request.contextPath}/index.jsp#somos">UTS</a></li>
+            
+            <c:choose>
+                <c:when test="${empty sessionScope.usuario}">
+                    <li><a href="${pageContext.request.contextPath}/login.jsp" class="btn-acceso"><i class="fas fa-user"></i> Acceder</a></li>
+                </c:when>
+                <c:otherwise>
+                    <li class="user-welcome">
+                        <i class="fas fa-user-circle"></i> ${sessionScope.usuario.nombre}
+                    </li>
+                    <li><a href="${pageContext.request.contextPath}/logout.jsp" class="btn-acceso"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
+                </c:otherwise>
+            </c:choose>
+        </ul>
+    </div>
+</nav>

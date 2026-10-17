@@ -1,0 +1,18 @@
+<%-- Encabezado "Bienvenido" con el usuario y su menú, igual en todos los paneles. --%>
+<div class="tg-topbar">
+    <h3>Bienvenido</h3>
+    <div class="tg-user">
+        <button type="button" class="tg-user-btn" onclick="this.nextElementSibling.classList.toggle('abierto')">
+            <span class="tg-avatar"><i class="fas fa-user"></i></span>
+            <c:choose>
+                <c:when test="${sessionScope.rol == 'coordinador'}">Comité - Ingeniería de Sistemas</c:when>
+                <c:otherwise><c:out value="${sessionScope.nombreUsuario}" /></c:otherwise>
+            </c:choose>
+            <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="tg-menu-user">
+            <a href="dashboard.jsp?sec=perfil"><i class="fas fa-user-circle"></i> Mi perfil</a>
+            <a href="${pageContext.request.contextPath}/logout.jsp" onclick="return confirm('¿Cerrar sesión?')"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+        </div>
+    </div>
+</div>
