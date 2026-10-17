@@ -1,0 +1,20 @@
+# Respaldos de la base de datos generados por respaldo_base_datos.bat
+base_datos/respaldo_proyectos_grados_*.sql
+
+# IDE y sistema operativo
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+nbproject/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Compilados y temporales
+build/
+target/
+*.class
+*.log
+*.tmp

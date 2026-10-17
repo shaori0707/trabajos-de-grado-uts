@@ -1,0 +1,41 @@
+GESTION Y SEGUIMIENTO DE TRABAJOS DE GRADO - UTS
+
+1) Base de datos
+   Importa base_datos/proyecto_final_2.sql en phpMyAdmin (XAMPP).
+   ADVERTENCIA: el script empieza con DROP DATABASE y borra la base proyecto_final_2.
+   Haz antes un respaldo con base_datos/respaldo_base_datos.bat.
+
+2) Proyecto
+   Copia esta carpeta como aplicacion web en Tomcat (conexion en WEB-INF/fragments/conexion.jspf,
+   usuario root sin clave, base proyecto_final_2).
+
+3) Usuarios de prueba (correo / clave)
+   admin@uts.edu.co / Admin123          coordinador@uts.edu.co (Comite) / Coord123
+   docentes (directores): diego.alvarez, marta.rojas @uts.edu.co / Doc12345
+   evaluador: juan.perez@uts.edu.co / Eva12345
+   estudiantes: laura.gomez, andres.castro, sofia.ramirez, camilo.torres @uts.edu.co / Est12345
+
+4) Fuera de alcance: Retiros y cambios (requerimientos 39 y 40).
+
+5) Aspecto visual
+   Los paneles usan css/tg.css y js/tg.js (aspecto del sistema Trabajos de Grado UTS) y los fragmentos
+   WEB-INF/fragments/tg_header.jspf, tg_seguimiento.jspf y tg_detalle.jspf. Cambia los colores en :root de css/tg.css.
+
+6) Probado de verdad
+   El proyecto se ejecuto en Tomcat 9 + MariaDB 10.11: 38 pantallas cargan sin error y 42 pasos de flujo
+   (login, revision del pago, entregas, firma del director, evaluacion, cierre, prorrogas, usuarios, ideas)
+   se comprobaron contra la base de datos. Correcciones clave: WEB-INF/web.xml fija UTF-8 (tildes y n) y
+   conexion.jspf usa useOldAliasMetadataBehavior=true (necesario con el conector MySQL 9.x para los alias de columnas).
+   Las fechas se muestran sin fmt:formatDate porque el conector 9.x entrega LocalDateTime.
+
+7) Quien hace que
+   - Administrador: usuarios y roles, inscribir docentes (cedula, correo y nombre), editar proyectos, base documental,
+     calendario, configuraciones (fechas del periodo y copia de seguridad) y mensajes.
+   - Comite (docentes evaluadores): revisar el pago, asignar director y evaluador, prorrogas, cierre y sustentacion,
+     ideas del banco y configuraciones.
+   - Estudiante: sube sus documentos (enlaces de Drive/OneDrive) desde las tarjetas de cada fase.
+
+8) Roles
+   Administrador, Comite, Docente (director), Evaluador y Estudiante son cinco roles distintos, cada uno con su panel.
+   El Comite asigna el director y el evaluador (dos docentes distintos). El docente ve 'Docente Director' y 'Docente Evaluador' en su menu. Prorrogas: el estudiante las solicita (carta + pago) y el Comite las aprueba (max. 2 de 180 dias).
+   El administrador inscribe docentes y evaluadores desde "Docentes y evaluadores".
